@@ -9,3 +9,12 @@ export enum AlertEnum {
   Lose = "lose",
   Win = "win",
 }
+export enum RadioEnum {
+  Under = "under",
+  Over = "over",
+}
+
+export enum ColorEnum {
+  Green = "green",
+  Red = "red",
+}

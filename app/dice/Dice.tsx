@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import Slider from "@mui/material/Slider";
 import Box from "@mui/material/Box";
 import Radio from "@mui/material/Radio";
@@ -17,137 +17,93 @@ import TableHead from "@mui/material/TableHead";
 import TableBody from "@mui/material/TableBody";
 import Table from "@mui/material/Table";
 import TableContainer from "@mui/material/TableContainer";
-import { AlertEnum, GameData } from "../interface/gameData.interface";
-
-let dataResult: GameData[] = [];
+import {
+  AlertEnum,
+  ColorEnum,
+  GameData,
+  RadioEnum,
+} from "../interface/gameData.interface";
+import { MARKS, MAX_RESULTS } from "../constants/Dice.constant";
+import {
+  alertStyle,
+  buttonStyle,
+  containerStyle,
+  formControlStyle,
+  sliderStyle,
+  tableStyle,
+} from "./Dice.style";
 
 const Dice = () => {
-  const [valueSlider, setValueSlider] = useState<number>(20);
-  const [valueRadio, setValueRadio] = useState("Under");
-  const [showAlert, setShowAlert] = useState<string>("");
+  const [valueSlider, setValueSlider] = useState(20);
+  const [valueRadio, setValueRadio] = useState<RadioEnum>(RadioEnum.Under);
+  const [showAlert, setShowAlert] = useState("");
+  const [dataResult, setDataResult] = useState<GameData[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const handleChangeSlider = (event: Event, newValue: number | number[]) => {
     setValueSlider(newValue as number);
   };
 
   const handleChangeRadio = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setValueRadio((event.target as HTMLInputElement).value);
+    setValueRadio((event.target as HTMLInputElement).value as RadioEnum);
   };
 
-  const marks = [
-    {
-      value: 0,
-      label: "0",
-    },
-    {
-      value: 10,
-      label: "",
-    },
-    {
-      value: 20,
-      label: "",
-    },
-    {
-      value: 30,
-      label: "",
-    },
-    {
-      value: 40,
-      label: "",
-    },
-    {
-      value: 50,
-      label: "",
-    },
-    {
-      value: 60,
-      label: "",
-    },
-    {
-      value: 70,
-      label: "",
-    },
-    {
-      value: 80,
-      label: "",
-    },
-    {
-      value: 90,
-      label: "",
-    },
-    {
-      value: 100,
-      label: "100",
-    },
-  ];
+  const getRandom = () => {
+    setLoading(true);
 
-  const getRandom = useCallback(() => {
-    let obj = {
-      time: Date.now().toString(),
+    const gameDate = new Date();
+    const obj = {
+      time: `${gameDate.getHours()}:${gameDate.getMinutes()}:${gameDate.getSeconds()}`,
       guess: valueRadio + " " + valueSlider,
       result: Math.floor(Math.random() * 101),
       color: "",
     };
 
-    // console.log("value1", valueRadio);
-    // console.log("obj.result", obj.result);
-    // console.log("value", valueSlider);
     if (
-      (valueRadio === "Under" && obj.result < valueSlider) ||
-      (valueRadio === "Over" && obj.result > valueSlider)
+      (valueRadio === RadioEnum.Under && obj.result < valueSlider) ||
+      (valueRadio === RadioEnum.Over && obj.result > valueSlider)
     ) {
       setShowAlert(AlertEnum.Win);
-      obj.color = "green";
+      obj.color = ColorEnum.Green;
     }
 
     if (
-      (valueRadio === "Under" && obj.result > valueSlider) ||
-      (valueRadio === "Over" && obj.result < valueSlider)
+      (valueRadio === RadioEnum.Under && obj.result > valueSlider) ||
+      (valueRadio === RadioEnum.Over && obj.result < valueSlider)
     ) {
       setShowAlert(AlertEnum.Lose);
-      obj.color = "red";
+      obj.color = ColorEnum.Red;
     }
 
-    console.log("obj", obj);
+    setDataResult((prev) => {
+      if (prev.length < MAX_RESULTS) return [obj, ...prev];
+      const newObj = [obj, ...prev.slice(0, 9)];
 
-    dataResult.push(obj);
-  }, [valueRadio, valueSlider]);
+      return newObj;
+    });
+    setLoading(false);
+  };
 
   return (
-    <Container
-      sx={{
-        p: 1,
-        width: 600,
-        margin: "auto",
-        display: "block",
-        alignContent: "center",
-      }}
-    >
+    <Container sx={containerStyle}>
       {showAlert === AlertEnum.Win && (
-        <Alert
-          severity="success"
-          variant="filled"
-          sx={{ width: 600, height: 76, margin: "auto" }}
-        >
+        <Alert severity="success" variant="filled" sx={alertStyle}>
           <AlertTitle>You win</AlertTitle>
           Number was right.
         </Alert>
       )}
       {showAlert === AlertEnum.Lose && (
-        <Alert
-          severity="error"
-          variant="filled"
-          sx={{
-            width: 600,
-            height: 76,
-            margin: "auto",
-          }}
-        >
+        <Alert severity="error" variant="filled" sx={alertStyle}>
           <AlertTitle>You lost</AlertTitle>
           Number was hight.
         </Alert>
       )}
-      <Box display="flex" alignItems="center" justifyContent="center">
+      <Box
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        marginTop={10}
+      >
         <Box
           height={200}
           width={320}
@@ -159,16 +115,10 @@ const Dice = () => {
           fontSize={100}
           p={2}
         >
-          {dataResult.reverse()[0]?.result}
+          {dataResult[0]?.result}
         </Box>
       </Box>
-      <FormControl
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
+      <FormControl sx={formControlStyle}>
         <RadioGroup
           row
           aria-labelledby="demo-controlled-radio-buttons-group"
@@ -177,12 +127,12 @@ const Dice = () => {
           onChange={handleChangeRadio}
         >
           <FormControlLabel
-            value="Under"
+            value={RadioEnum.Under}
             control={<Radio color="secondary" />}
             label="Under"
           />
           <FormControlLabel
-            value="Over"
+            value={RadioEnum.Over}
             control={<Radio color="secondary" />}
             label="Over"
           />
@@ -190,7 +140,7 @@ const Dice = () => {
       </FormControl>
       <Box display="flex" alignItems="center" justifyContent="center">
         <Slider
-          sx={{ width: 320 }}
+          sx={sliderStyle}
           size="small"
           color="secondary"
           orientation="horizontal"
@@ -200,7 +150,7 @@ const Dice = () => {
           step={1}
           min={0}
           max={100}
-          marks={marks}
+          marks={MARKS}
         />
       </Box>
       <Box display="flex" justifyContent="center" alignItems="center">
@@ -208,18 +158,16 @@ const Dice = () => {
           variant="contained"
           color="secondary"
           size="large"
-          sx={{
-            width: 320,
-            height: 42,
-          }}
+          sx={buttonStyle}
           onClick={getRandom}
+          disabled={loading}
         >
           Play
         </Button>
       </Box>
 
       <TableContainer>
-        <Table sx={{ minWidth: 500 }} aria-label="simple table">
+        <Table sx={tableStyle} aria-label="simple table">
           <TableHead>
             <TableRow>
               <TableCell>Time</TableCell>
@@ -228,9 +176,11 @@ const Dice = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {dataResult.map((row) => (
-              <TableRow key={row.time}>
-                <TableCell scope="row">{row.time}</TableCell>
+            {dataResult.map((row, index) => (
+              <TableRow key={index}>
+                <TableCell scope="row">
+                  {index} {row.time}
+                </TableCell>
                 <TableCell align="right">{row.guess}</TableCell>
                 <TableCell sx={{ color: row.color }} align="right">
                   {row.result}
